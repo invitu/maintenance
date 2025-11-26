@@ -5,15 +5,15 @@ class MaintenanceRequest(models.Model):
     _inherit = "maintenance.request"
 
     total_cost = fields.Float(
+        string="Total cost",
         compute="_compute_request_total_cost", readonly=True, store=True
     )
 
-    @api.depends("timesheet_ids", "stock_picking_ids")
+    @api.depends("timesheet_ids", "stock_picking_ids.state")
     def _compute_request_total_cost(self):
         for request in self:
-            __import__('pdb').set_trace()
-            timesheet_cost = 0.0
-            stock_cost = 0.0
+            timesheet_cost = sum(line.amount for line in request.timesheet_ids)
+            stock_cost = sum(line.amount for line in request.stock_picking_ids.move_ids.account_move_ids.line_ids.analytic_line_ids)
             request.total_cost = timesheet_cost + stock_cost
 
     def action_view_account_analytic_line_ids(self):
